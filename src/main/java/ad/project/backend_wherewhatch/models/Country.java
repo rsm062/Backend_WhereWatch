@@ -14,4 +14,6 @@ public class Country {
     private String isoCode;
     @ManyToMany
     private List<Platform> platforms;
+    @ManyToMany
+    private List<Movie> movies;
 }
