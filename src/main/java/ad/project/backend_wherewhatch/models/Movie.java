@@ -17,4 +17,6 @@ public class Movie {
     private Double rating;
     @ManyToMany
     private List<Platform> platforms;
+    @ManyToMany
+    private List<Country> countries;
 }
