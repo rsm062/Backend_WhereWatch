@@ -2,6 +2,7 @@ package ad.project.backend_wherewhatch.repositories;
 
 import ad.project.backend_wherewhatch.models.Country;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CountryRepository extends JpaRepository<Country, Integer> {
