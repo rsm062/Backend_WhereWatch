@@ -1,6 +1,6 @@
-package ad.project.backend_wherewhatch.controllers;
+package ad.project.backend_wherewhatch.infrastructure.rest.controller;
 
-import ad.project.backend_wherewhatch.services.TmdbService;
+import ad.project.backend_wherewhatch.application.service.TmdbService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

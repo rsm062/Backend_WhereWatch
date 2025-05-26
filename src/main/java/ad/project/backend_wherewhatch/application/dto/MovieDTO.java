@@ -1,6 +1,8 @@
-package ad.project.backend_wherewhatch.DTO;
+package ad.project.backend_wherewhatch.application.dto;
 
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class MovieDTO {
@@ -8,4 +10,5 @@ public class MovieDTO {
     private String title;
     private String overview;
     private String releaseDate;
+    private List<AvailabilityDTO> availabilities;
 }

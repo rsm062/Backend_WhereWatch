@@ -1,4 +1,4 @@
-package ad.project.backend_wherewhatch.services;
+package ad.project.backend_wherewhatch.application.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;

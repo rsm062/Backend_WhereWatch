@@ -1,7 +1,7 @@
-package ad.project.backend_wherewhatch.services;
+package ad.project.backend_wherewhatch.application.service;
 
-import ad.project.backend_wherewhatch.models.Movie;
-import ad.project.backend_wherewhatch.repositories.MovieRepository;
+import ad.project.backend_wherewhatch.domain.models.Movie;
+import ad.project.backend_wherewhatch.domain.repositories.MovieRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

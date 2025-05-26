@@ -1,7 +1,7 @@
-package ad.project.backend_wherewhatch.services;
+package ad.project.backend_wherewhatch.application.service;
 
-import ad.project.backend_wherewhatch.models.Platform;
-import ad.project.backend_wherewhatch.repositories.PlatformRepository;
+import ad.project.backend_wherewhatch.domain.models.Platform;
+import ad.project.backend_wherewhatch.domain.repositories.PlatformRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

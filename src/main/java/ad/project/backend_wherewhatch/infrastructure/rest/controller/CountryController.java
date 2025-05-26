@@ -1,7 +1,7 @@
-package ad.project.backend_wherewhatch.controllers;
+package ad.project.backend_wherewhatch.infrastructure.rest.controller;
 
-import ad.project.backend_wherewhatch.models.Country;
-import ad.project.backend_wherewhatch.services.CountryService;
+import ad.project.backend_wherewhatch.domain.models.Country;
+import ad.project.backend_wherewhatch.application.service.CountryService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

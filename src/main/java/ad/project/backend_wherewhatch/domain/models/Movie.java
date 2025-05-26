@@ -1,8 +1,9 @@
-package ad.project.backend_wherewhatch.models;
+package ad.project.backend_wherewhatch.domain.models;
 
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -15,6 +16,6 @@ public class Movie {
     private String releaseDate;
     private String posterPath;
     private Double rating;
-    @ManyToMany
-    private List<Platform> platforms;
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Availability> availabilities = new ArrayList<>();
 }

@@ -1,7 +1,7 @@
-package ad.project.backend_wherewhatch.controllers;
+package ad.project.backend_wherewhatch.infrastructure.rest.controller;
 
-import ad.project.backend_wherewhatch.models.Platform;
-import ad.project.backend_wherewhatch.services.PlatformService;
+import ad.project.backend_wherewhatch.domain.models.Platform;
+import ad.project.backend_wherewhatch.application.service.PlatformService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

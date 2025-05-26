@@ -1,7 +1,7 @@
-package ad.project.backend_wherewhatch.controllers;
+package ad.project.backend_wherewhatch.infrastructure.rest.controller;
 
-import ad.project.backend_wherewhatch.models.Movie;
-import ad.project.backend_wherewhatch.services.MovieService;
+import ad.project.backend_wherewhatch.domain.models.Movie;
+import ad.project.backend_wherewhatch.application.service.MovieService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
