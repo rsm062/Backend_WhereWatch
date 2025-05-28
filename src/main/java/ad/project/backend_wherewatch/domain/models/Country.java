@@ -14,6 +14,9 @@ public class Country {
     public Country() {
     }
 
+    public Country(int i, String name, String isoCode) {
+    }
+
     public int getId() {
         return id;
     }

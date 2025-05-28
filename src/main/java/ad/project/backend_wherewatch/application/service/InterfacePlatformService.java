@@ -2,6 +2,9 @@ package ad.project.backend_wherewatch.application.service;
 
 import ad.project.backend_wherewatch.domain.models.Platform;
 
+import java.util.Optional;
+
 public interface InterfacePlatformService {
-    void ensureExists(Platform platform);
+    Optional<Platform> findByName(String name);
+    Platform save(Platform platform);
 }

@@ -12,17 +12,16 @@ import java.util.Optional;
 @Service
 public class PlatformService implements InterfacePlatformService {
 
-    private final PlatformRepository platformRepository;
-
     @Autowired
-    public PlatformService(PlatformRepository platformRepository) {
-        this.platformRepository = platformRepository;
+    private PlatformRepository platformRepository;
+
+    @Override
+    public Optional<Platform> findByName(String name) {
+        return platformRepository.findByName(name);
     }
 
     @Override
-    public void ensureExists(Platform platform) {
-        if (!platformRepository.existsByName(platform.getName())) {
-            platformRepository.save(platform);
-        }
+    public Platform save(Platform platform) {
+        return platformRepository.save(platform);
     }
 }

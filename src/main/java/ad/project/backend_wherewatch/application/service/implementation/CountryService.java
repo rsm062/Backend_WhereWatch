@@ -7,21 +7,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CountryService implements InterfaceCountryService {
 
-    private final CountryRepository countryRepository;
-
     @Autowired
-    public CountryService(CountryRepository countryRepository) {
-        this.countryRepository = countryRepository;
+    private CountryRepository countryRepository;
+
+    @Override
+    public Optional<Country> findByIsoCode(String isoCode) {
+        return countryRepository.findByIsoCode(isoCode);
     }
 
     @Override
-    public void ensureExists(Country country) {
-        if (!countryRepository.existsByIsoCode(country.getIsoCode())) {
-            countryRepository.save(country);
-        }
+    public Country save(Country country) {
+        return countryRepository.save(country);
     }
 }

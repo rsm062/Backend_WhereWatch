@@ -14,6 +14,9 @@ public class Platform {
     public Platform() {
     }
 
+    public Platform(int i, String name, String logoPath) {
+    }
+
     public int getId() {
         return id;
     }
