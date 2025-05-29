@@ -15,8 +15,8 @@ public class Movie {
     private String title;
     private String overview;
     private String releaseDate;
-    private String posterPath;
-    private Double rating;
+    /*private String posterPath;
+    private Double rating;*/
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Availability> availabilities = new ArrayList<>();
 
@@ -55,7 +55,7 @@ public class Movie {
         this.releaseDate = releaseDate;
     }
 
-    public String getPosterPath() {
+   /* public String getPosterPath() {
         return posterPath;
     }
 
@@ -69,7 +69,7 @@ public class Movie {
 
     public void setRating(Double rating) {
         this.rating = rating;
-    }
+    }*/
 
     public List<Availability> getAvailabilities() {
         return availabilities;

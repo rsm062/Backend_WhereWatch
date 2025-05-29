@@ -59,8 +59,8 @@ public class TmdbClient {
             movieDTO.setTitle(movieNode.path("title").asText());
             movieDTO.setOverview(movieNode.path("overview").asText());
             movieDTO.setReleaseDate(movieNode.path("release_date").asText(""));
-            movieDTO.setPosterPath(movieNode.path("poster_path").asText(null));
-            movieDTO.setRating(movieNode.path("vote_average").asDouble(0.0));
+            /*movieDTO.setPosterPath(movieNode.path("poster_path").asText(null));
+            movieDTO.setRating(movieNode.path("vote_average").asDouble(0.0));*/
             // Por ahora dejamos availabilities vacías, se pueden cargar manualmente o luego se extiende
             movies.add(movieDTO);
         }

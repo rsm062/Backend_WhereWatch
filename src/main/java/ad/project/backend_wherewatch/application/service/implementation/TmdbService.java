@@ -144,8 +144,8 @@ public class TmdbService implements InterfaceTmdbService {
         movieDTO.setTitle("Título desde otro endpoint o hardcoded"); // Puedes combinar respuestas
         movieDTO.setOverview("Resumen desde otro endpoint");
         movieDTO.setReleaseDate("2024-01-01");
-        movieDTO.setPosterPath("/poster.jpg");
-        movieDTO.setRating(7.5);
+/*movieDTO.setPosterPath("/poster.jpg");
+        movieDTO.setRating(7.5);*/
         movieDTO.setAvailabilities(availabilities);
 
         return movieDTO;
@@ -165,9 +165,9 @@ public class TmdbService implements InterfaceTmdbService {
                 MovieDTO dto = new MovieDTO();
                 dto.setTitle(movieNode.path("title").asText());
                 dto.setOverview(movieNode.path("overview").asText(null));
-                dto.setPosterPath(movieNode.path("poster_path").asText(null));
+                /*dto.setPosterPath(movieNode.path("poster_path").asText(null));*/
                 dto.setReleaseDate(movieNode.path("release_date").asText(null));
-                dto.setRating(movieNode.path("vote_average").asDouble(0.0));
+                /*dto.setRating(movieNode.path("vote_average").asDouble(0.0));*/
                 dto.setAvailabilities(new ArrayList<>()); // Vacío al principio
 
                 Movie movie = movieMapper.toEntity(dto);

@@ -10,8 +10,8 @@ public class MovieDTO {
     private String title;
     private String overview;
     private String releaseDate;
-    private String posterPath;
-    private Double rating;
+    /*private String posterPath;
+    private Double rating;*/
     private List<AvailabilityDTO> availabilities = new ArrayList<>();
 
     public MovieDTO() {
@@ -49,7 +49,7 @@ public class MovieDTO {
         this.releaseDate = releaseDate;
     }
 
-    public String getPosterPath() {
+    /*public String getPosterPath() {
         return posterPath;
     }
 
@@ -63,7 +63,7 @@ public class MovieDTO {
 
     public void setRating(Double rating) {
         this.rating = rating;
-    }
+    }*/
 
     public List<AvailabilityDTO> getAvailabilities() {
         return availabilities == null ? Collections.emptyList() : availabilities;

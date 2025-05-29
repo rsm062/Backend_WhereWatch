@@ -18,8 +18,8 @@ public class MovieMapper {
         dto.setTitle(movie.getTitle());
         dto.setOverview(movie.getOverview());
         dto.setReleaseDate(movie.getReleaseDate());
-        dto.setPosterPath(movie.getPosterPath());
-        dto.setRating(movie.getRating());
+        /*dto.setPosterPath(movie.getPosterPath());
+        dto.setRating(movie.getRating());*/
 
         dto.setAvailabilities(
                 movie.getAvailabilities().stream()
@@ -36,8 +36,8 @@ public class MovieMapper {
         movie.setTitle(dto.getTitle());
         movie.setOverview(dto.getOverview());
         movie.setReleaseDate(dto.getReleaseDate());
-        movie.setPosterPath(dto.getPosterPath());
-        movie.setRating(dto.getRating());
+        /*movie.setPosterPath(dto.getPosterPath());
+        movie.setRating(dto.getRating());*/
 
         List<AvailabilityDTO> availabilities = dto.getAvailabilities();
         if (availabilities == null) {
