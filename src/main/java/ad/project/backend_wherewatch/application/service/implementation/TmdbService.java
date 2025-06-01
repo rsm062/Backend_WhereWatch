@@ -15,9 +15,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -28,10 +33,11 @@ import java.util.Map;
 
 @Service
 public class TmdbService implements InterfaceTmdbService {
-    @Autowired
+
+
     private RestTemplate restTemplate;
 
-    @Autowired
+   /* @Autowired
     private MovieService movieService;
 
     @Autowired
@@ -51,18 +57,82 @@ public class TmdbService implements InterfaceTmdbService {
     private MovieMapper movieMapper;
 
     @Autowired
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;*/
 
     private final String TMDB_API_KEY = "346172216d64b089ac0f2697e41ab7fa";
     private final String TMDB_SEARCH_URL = "https://api.themoviedb.org/3/search/movie?query={title}&api_key={apiKey}";
 
-    public TmdbService(MovieRepository movieRepository, ObjectMapper objectMapper) {
-        this.movieRepository = movieRepository;
-        this.objectMapper = objectMapper;
+
+    public TmdbService() {
     }
 
 
+
+    @Value("${tmdb.api.key}")
+    private String apiKey; // Token completo con 'Bearer ...'
+
+    @Autowired
+    public TmdbService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
     @Override
+    public List<MovieDTO> searchMovies(String title) {
+        String url = UriComponentsBuilder
+                .fromHttpUrl("https://api.themoviedb.org/3/search/movie")
+                .queryParam("query", title)
+                .queryParam("include_adult", true)
+                .queryParam("language", "en-US")
+                .queryParam("page", 1)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("accept", "application/json");
+        headers.set("Authorization", "Bearer " + apiKey);
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                String.class
+        );
+
+        // Parsear JSON a lista de MovieDTO
+        return parseResponse(response.getBody());
+    }
+
+    private List<MovieDTO> parseResponse(String json) {
+        // Usa Jackson para parsear JSON
+        ObjectMapper mapper = new ObjectMapper();
+        List<MovieDTO> results = new ArrayList<>();
+
+        try {
+            JsonNode root = mapper.readTree(json);
+            JsonNode resultsNode = root.get("results");
+
+            if (resultsNode != null && resultsNode.isArray()) {
+                for (JsonNode node : resultsNode) {
+                    MovieDTO movie = new MovieDTO();
+                    movie.setTitle(node.get("title").asText());
+                    movie.setOverview(node.get("overview").asText(""));
+                    movie.setReleaseDate(node.get("release_date").asText(""));
+                    /*movie.setPosterPath(node.get("poster_path").asText(""));
+                    movie.setRating(node.get("vote_average").asDouble(0.0));*/
+
+                    results.add(movie);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return results;
+    }
+
+
+    /*@Override
     public MovieDTO fetchAndStoreMovieByTitle(String title) throws JsonProcessingException {
         // 1. Fetch basic movie info
         ResponseEntity<String> response = restTemplate.getForEntity(
@@ -145,7 +215,7 @@ public class TmdbService implements InterfaceTmdbService {
         movieDTO.setOverview("Resumen desde otro endpoint");
         movieDTO.setReleaseDate("2024-01-01");
 /*movieDTO.setPosterPath("/poster.jpg");
-        movieDTO.setRating(7.5);*/
+        movieDTO.setRating(7.5);
         movieDTO.setAvailabilities(availabilities);
 
         return movieDTO;
@@ -165,9 +235,9 @@ public class TmdbService implements InterfaceTmdbService {
                 MovieDTO dto = new MovieDTO();
                 dto.setTitle(movieNode.path("title").asText());
                 dto.setOverview(movieNode.path("overview").asText(null));
-                /*dto.setPosterPath(movieNode.path("poster_path").asText(null));*/
+                /*dto.setPosterPath(movieNode.path("poster_path").asText(null));
                 dto.setReleaseDate(movieNode.path("release_date").asText(null));
-                /*dto.setRating(movieNode.path("vote_average").asDouble(0.0));*/
+                /*dto.setRating(movieNode.path("vote_average").asDouble(0.0));
                 dto.setAvailabilities(new ArrayList<>()); // Vacío al principio
 
                 Movie movie = movieMapper.toEntity(dto);
@@ -180,7 +250,9 @@ public class TmdbService implements InterfaceTmdbService {
         } catch (Exception e) {
             throw new RuntimeException("Error fetching or saving movies", e);
         }
-    }
+    }*/
+
+
 
 }
 

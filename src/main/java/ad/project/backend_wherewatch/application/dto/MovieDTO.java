@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class MovieDTO {
-    private Long id;
+    private int id;
     private String title;
     private String overview;
     private String releaseDate;
@@ -17,11 +17,11 @@ public class MovieDTO {
     public MovieDTO() {
     }
 
-    public Long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(int id) {
         this.id = id;
     }
 

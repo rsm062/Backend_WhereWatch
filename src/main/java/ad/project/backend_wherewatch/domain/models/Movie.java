@@ -10,8 +10,8 @@ import java.util.List;
 @Table(name = "movies")
 
 public class Movie {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Id //@GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
     private String title;
     private String overview;
     private String releaseDate;
@@ -23,11 +23,11 @@ public class Movie {
     public Movie() {
     }
 
-    public Long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(int id) {
         this.id = id;
     }
 

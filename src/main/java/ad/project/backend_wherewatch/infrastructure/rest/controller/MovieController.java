@@ -34,12 +34,18 @@ public class MovieController {
         this.movieMapper = movieMapper;
     }
 
-    @GetMapping("/search")
+    /*@GetMapping("/search")
     public List<MovieDTO> searchMoviesByTitle(@RequestParam String title) {
         List<Movie> movies = movieRepository.findByTitleContainingIgnoreCase(title);
         return movies.stream()
                 .map(MovieMapper::toDto)
                 .collect(Collectors.toList());
+    }*/
+
+    @GetMapping("/search")
+    public ResponseEntity<List<MovieDTO>> searchMovies(@RequestParam String title) {
+        List<MovieDTO> results = tmdbService.searchMovies(title);
+        return ResponseEntity.ok(results);
     }
 
     /*@GetMapping("/search")

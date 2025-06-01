@@ -12,8 +12,4 @@ public class BackendWhereWhatchApplication {
         SpringApplication.run(BackendWhereWhatchApplication.class, args);
     }
 
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
 }
