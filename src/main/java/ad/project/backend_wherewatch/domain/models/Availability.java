@@ -11,7 +11,7 @@ public class Availability {
     @ManyToOne
     @JoinColumn(name = "movie_id")
     private Movie movie;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "platform_id")
     private Platform platform;
     @ManyToOne

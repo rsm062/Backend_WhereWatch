@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 public class Platform {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    @Column(unique = true)
     private String name;
     private String logoPath;
 

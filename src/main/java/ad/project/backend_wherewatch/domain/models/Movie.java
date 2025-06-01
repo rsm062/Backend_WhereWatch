@@ -13,6 +13,7 @@ public class Movie {
     @Id //@GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String title;
+    @Column(columnDefinition = "TEXT")
     private String overview;
     private String releaseDate;
     /*private String posterPath;

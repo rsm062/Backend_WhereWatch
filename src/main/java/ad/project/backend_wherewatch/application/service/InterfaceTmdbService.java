@@ -7,4 +7,7 @@ import java.util.List;
 
 public interface InterfaceTmdbService {
     List<MovieDTO> searchMovies(String title);
+    List<MovieDTO> searchAndFallback(String title);
+    /*List<MovieDTO> searchMoviesFromDatabase(String title);
+    List<MovieDTO> fetchAndSaveMoviesFromTmdb(String title);*/
 }

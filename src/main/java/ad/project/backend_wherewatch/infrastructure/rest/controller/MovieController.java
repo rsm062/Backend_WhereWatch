@@ -44,7 +44,7 @@ public class MovieController {
 
     @GetMapping("/search")
     public ResponseEntity<List<MovieDTO>> searchMovies(@RequestParam String title) {
-        List<MovieDTO> results = tmdbService.searchMovies(title);
+        List<MovieDTO> results = tmdbService.searchAndFallback(title);
         return ResponseEntity.ok(results);
     }
 

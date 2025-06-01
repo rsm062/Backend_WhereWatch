@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class MovieMapper {
-    public static MovieDTO toDto(Movie movie) {
+    public MovieDTO toDto(Movie movie) {
         MovieDTO dto = new MovieDTO();
         dto.setId(movie.getId());
         dto.setTitle(movie.getTitle());
@@ -30,7 +30,7 @@ public class MovieMapper {
         return dto;
     }
 
-    public static Movie toEntity(MovieDTO dto) {
+    public Movie toEntity(MovieDTO dto) {
         Movie movie = new Movie();
         movie.setId(dto.getId());
         movie.setTitle(dto.getTitle());
