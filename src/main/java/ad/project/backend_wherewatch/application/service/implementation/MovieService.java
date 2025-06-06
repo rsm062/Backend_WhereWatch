@@ -1,5 +1,6 @@
 package ad.project.backend_wherewatch.application.service.implementation;
 
+import ad.project.backend_wherewatch.application.dto.MovieDTO;
 import ad.project.backend_wherewatch.application.service.InterfaceMovieService;
 import ad.project.backend_wherewatch.domain.models.Movie;
 import ad.project.backend_wherewatch.domain.repositories.MovieRepository;
@@ -28,5 +29,16 @@ public class MovieService implements InterfaceMovieService {
     @Override
     public List<Movie> searchMoviesByTitle(String title) {
         return movieRepository.findByTitleContainingIgnoreCase(title);
+    }
+
+    @Override
+    public Movie searchMovieById(int id){
+        Optional<Movie> movie = movieRepository.findById(id);
+        if(movie.isPresent()){
+            return movie.get();
+        }else{
+            System.err.println("Movie with ID " + id + " not found");
+            return null;
+        }
     }
 }

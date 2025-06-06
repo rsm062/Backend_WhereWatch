@@ -1,5 +1,6 @@
 package ad.project.backend_wherewatch.domain.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 
@@ -10,14 +11,15 @@ import java.util.List;
 @Table(name = "movies")
 
 public class Movie {
-    @Id //@GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @Column(unique = true)
     private int id;
     private String title;
     @Column(columnDefinition = "TEXT")
     private String overview;
     private String releaseDate;
-    /*private String posterPath;
-    private Double rating;*/
+    private String posterPath;
+    private Double rating;
+    @JsonManagedReference
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Availability> availabilities = new ArrayList<>();
 
@@ -56,7 +58,7 @@ public class Movie {
         this.releaseDate = releaseDate;
     }
 
-   /* public String getPosterPath() {
+   public String getPosterPath() {
         return posterPath;
     }
 
@@ -70,7 +72,7 @@ public class Movie {
 
     public void setRating(Double rating) {
         this.rating = rating;
-    }*/
+    }
 
     public List<Availability> getAvailabilities() {
         return availabilities;

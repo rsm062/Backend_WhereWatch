@@ -6,5 +6,8 @@ import java.util.Optional;
 
 public interface InterfacePlatformService {
     Optional<Platform> findByName(String name);
+
+    Optional<Platform> findById(int id);
+
     Platform save(Platform platform);
 }

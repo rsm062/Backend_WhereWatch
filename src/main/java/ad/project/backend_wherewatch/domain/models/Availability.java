@@ -1,5 +1,6 @@
 package ad.project.backend_wherewatch.domain.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
 
@@ -8,10 +9,11 @@ public class Availability {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "movie_id")
     private Movie movie;
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "platform_id")
     private Platform platform;
     @ManyToOne
@@ -53,4 +55,3 @@ public class Availability {
         this.country = country;
     }
 }
-

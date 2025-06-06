@@ -1,5 +1,6 @@
 package ad.project.backend_wherewatch.domain.repositories;
 
+import ad.project.backend_wherewatch.application.dto.MovieDTO;
 import ad.project.backend_wherewatch.domain.models.Movie;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -11,4 +12,5 @@ import java.util.Optional;
 public interface MovieRepository extends JpaRepository<Movie, Integer>{
     Optional<Movie> findByTitle(String title);
     List<Movie> findByTitleContainingIgnoreCase(String title);
+    Optional<Movie> findById(int id);
 }

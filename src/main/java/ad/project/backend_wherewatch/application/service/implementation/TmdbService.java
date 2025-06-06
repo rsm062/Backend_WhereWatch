@@ -9,14 +9,9 @@ import ad.project.backend_wherewatch.application.mapper.CountryMapper;
 import ad.project.backend_wherewatch.application.mapper.MovieMapper;
 import ad.project.backend_wherewatch.application.mapper.PlatformMapper;
 import ad.project.backend_wherewatch.application.service.InterfaceTmdbService;
-import ad.project.backend_wherewatch.domain.models.Availability;
-import ad.project.backend_wherewatch.domain.models.Country;
-import ad.project.backend_wherewatch.domain.models.Movie;
-import ad.project.backend_wherewatch.domain.models.Platform;
+import ad.project.backend_wherewatch.domain.models.*;
 import ad.project.backend_wherewatch.domain.repositories.AvailabilityRepository;
-import ad.project.backend_wherewatch.domain.repositories.CountryRepository;
 import ad.project.backend_wherewatch.domain.repositories.MovieRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,40 +32,14 @@ import java.util.stream.Collectors;
 @Service
 public class TmdbService implements InterfaceTmdbService {
 
-
-    private RestTemplate restTemplate;
-
-   /* @Autowired
-    private MovieService movieService;*/
-
-    @Autowired
+    private final RestTemplate restTemplate;
     private final MovieRepository movieRepository;
+    private final AsyncSaverService asyncSaverService;
+    private final PlatformService platformService;
+    private final CountryService countryService;
+    private final MovieMapper movieMapper;
+    private final AvailabilityRepository availabilityRepository;
 
-
-    @Autowired
-    private PlatformService platformService;
-
-    @Autowired
-    private CountryService countryService;
-
-    /*@Autowired
-    private AvailabilityService availabilityService;*/
-
-    @Autowired
-    private MovieMapper movieMapper;
-
-    /*@Autowired
-    private final ObjectMapper objectMapper;*/
-
-    private final String TMDB_API_KEY = "346172216d64b089ac0f2697e41ab7fa";
-    private final String TMDB_SEARCH_URL = "https://api.themoviedb.org/3/search/movie?query={title}&api_key={apiKey}";
-    @Autowired
-    private AvailabilityRepository availabilityRepository;
-
-
-    public TmdbService(MovieRepository movieRepository) {
-        this.movieRepository = movieRepository;
-    }
 
 
 
@@ -78,36 +47,43 @@ public class TmdbService implements InterfaceTmdbService {
     private String apiKey; // Token completo con 'Bearer ...'
 
     @Autowired
-    public TmdbService(RestTemplate restTemplate, MovieRepository movieRepository) {
+    public TmdbService(RestTemplate restTemplate, MovieRepository movieRepository, AsyncSaverService asyncSaverService, PlatformService platformService, CountryService countryService, MovieMapper movieMapper, AvailabilityRepository availabilityRepository) {
         this.restTemplate = restTemplate;
         this.movieRepository = movieRepository;
+        this.asyncSaverService = asyncSaverService;
+        this.platformService = platformService;
+        this.countryService = countryService;
+        this.movieMapper = movieMapper;
+        this.availabilityRepository = availabilityRepository;
     }
 
     @Override
     public List<MovieDTO> searchMovies(String title) {
         String url = UriComponentsBuilder
                 .fromHttpUrl("https://api.themoviedb.org/3/search/movie")
-                .queryParam("query", title)
+                .queryParam("query", UriUtils.encode(title, StandardCharsets.UTF_8))
                 //.queryParam("include_adult", true)
                 //.queryParam("language", "en-US")
                 .queryParam("page", 1)
                 .toUriString();
 
+        ResponseEntity<String> response = headerCreater(url);
+
+        // Parsear JSON a lista de MovieDTO
+        return parseResponse(response.getBody());
+    }
+
+    private ResponseEntity<String> headerCreater(String url) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("accept", "application/json");
         headers.set("Authorization", "Bearer " + apiKey);
-
         HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(
+        return restTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 entity,
                 String.class
         );
-
-        // Parsear JSON a lista de MovieDTO
-        return parseResponse(response.getBody());
     }
 
     private List<MovieDTO> parseResponse(String json) {
@@ -126,8 +102,8 @@ public class TmdbService implements InterfaceTmdbService {
                     movie.setTitle(node.get("title").asText());
                     movie.setOverview(node.get("overview").asText(""));
                     movie.setReleaseDate(node.get("release_date").asText(""));
-                    /*movie.setPosterPath(node.get("poster_path").asText(""));
-                    movie.setRating(node.get("vote_average").asDouble(0.0));*/
+                    movie.setPosterPath(node.get("poster_path").asText(""));
+                    movie.setRating(node.get("vote_average").asDouble(0.0));
 
                     results.add(movie);
                 }
@@ -157,9 +133,11 @@ public class TmdbService implements InterfaceTmdbService {
         if (apiResults.isEmpty()) {
             return Collections.emptyList(); // Nada encontrado ni local ni remoto
         }
-        List<MovieDTO> finalResults = new ArrayList<>();
+        for (MovieDTO apiResult : apiResults) {
+            asyncSaverService.saveMovieAndAvailability(apiResult);
+        }
 
-        //  Convertir a entidades y guardar en BBDD
+        /*//  Convertir a entidades y guardar en BBDD
         for (MovieDTO dto : apiResults) {
             //Extraer id
             int tmdbId = dto.getId();
@@ -175,7 +153,7 @@ public class TmdbService implements InterfaceTmdbService {
             dto.setAvailabilities(availabilities);
             finalResults.add(dto);
 
-        }
+        }*/
 
         return apiResults;
     }
@@ -183,15 +161,7 @@ public class TmdbService implements InterfaceTmdbService {
     public List<AvailabilityDTO> getProvidersForMovieId(int tmdbId) {
         String url = "https://api.themoviedb.org/3/movie/" + tmdbId + "/watch/providers";
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("accept", "application/json");
-        headers.set("Authorization", "Bearer " + apiKey);
-
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(
-                url, HttpMethod.GET, entity, String.class
-        );
+        ResponseEntity<String> response = headerCreater(url);
 
         List<AvailabilityDTO> availabilities = new ArrayList<>();
 
@@ -204,26 +174,23 @@ public class TmdbService implements InterfaceTmdbService {
                 String countryCode = fieldNames.next();
                 JsonNode countryNode = resultsNode.get(countryCode);
                 // Buscar el país en base de datos por ISO
-
                 Optional<Country> countryOpt = countryService.findByIsoCode(countryCode);
                 if (countryOpt.isPresent() && countryNode.has("flatrate")) {
                     CountryDTO countryDTO = CountryMapper.toDto(countryOpt.get());
                     for (JsonNode provider : countryNode.get("flatrate")) {
-                        AvailabilityDTO dto = new AvailabilityDTO();
+                        AvailabilityDTO availabilityDTO = new AvailabilityDTO();
                         // Construir PlatformDTO
-                        PlatformDTO platform = new PlatformDTO();
-                        platform.setName(provider.get("provider_name").asText());
-                        // Si tienes id o logo, lo puedes setear también aquí
-                        // platform.setId(provider.get("provider_id").asLong());
-
-                        // Construir CountryDTO
-
-                        dto.setPlatform(platform);
-                        dto.setCountry(countryDTO);
-
-                        availabilities.add(dto);
+                        Platform platform = platformService.findById(provider.get("provider_id").asInt()).orElse(null);
+                        if (platform != null) {
+                            PlatformDTO platformDTO = PlatformMapper.toDto(platform);
+                            availabilityDTO.setPlatform(platformDTO);
+                        }else{
+                            continue;
+                        }
+                        availabilityDTO.setCountry(countryDTO);
+                        availabilities.add(availabilityDTO);
                     }
-                }else {
+                } else {
                     System.err.println("No se encontró el país con ISO: " + countryCode);
                 }
             }
@@ -231,47 +198,30 @@ public class TmdbService implements InterfaceTmdbService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return availabilities;
     }
 
-    @Autowired
-    private AvailabilityService availabilityService;
-
-
-    private AvailabilityMapper availabilityMapper;
-
     public void saveAvailabilityData(List<AvailabilityDTO> availabilityDTOs, Movie movie) {
         if (availabilityDTOs == null || availabilityDTOs.isEmpty() || movie == null) {
-            return; // O puedes lanzar una excepción si lo prefieres
+            return;
         }
-        List<Availability> entities = new ArrayList<>();
-
+        List<Availability> availabilities = new ArrayList<>();
         for (AvailabilityDTO dto : availabilityDTOs) {
-            // Buscar plataforma por nombre
-            Platform platform = platformService.findByName(dto.getPlatform().getName())
-                    .orElseGet(() -> {
-                        Platform newPlatform = PlatformMapper.toEntity(dto.getPlatform());
-                        return platformService.save(newPlatform);
-                    });
-
+            // Buscar plataforma por Id
+            Platform platform = platformService.findById(dto.getPlatform().getId())
+                    .orElse(null);
             // Buscar país por ISO (por si no lo hiciste ya en el DTO)
             Country country = countryService.findByIsoCode(dto.getCountry().getIsoCode())
-                    .orElse(null); // O lanza excepción si prefieres
-
-            if (country != null) {
+                    .orElse(null);
+            if (country != null && platform != null) {
                 Availability availability = AvailabilityMapper.toEntity(dto, movie);
                 availability.setPlatform(platform);
                 availability.setCountry(country);
-                entities.add(availability);
+                availabilities.add(availability);
             }
         }
-        availabilityRepository.saveAll(entities);
+        availabilityRepository.saveAll(availabilities);
     }
-
-
-
-
 
 }
 

@@ -32,4 +32,5 @@ public class AvailabilityDTO {
     public void setCountry(CountryDTO country) {
         this.country = country;
     }
+
 }

@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "plataforms")
 public class Platform {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
     private int id;
     @Column(unique = true)
     private String name;
@@ -15,7 +15,10 @@ public class Platform {
     public Platform() {
     }
 
-    public Platform(int i, String name, String logoPath) {
+    public Platform(int id, String name, String logoPath) {
+        this.id = id;
+        this.name = name;
+        this.logoPath = logoPath;
     }
 
     public int getId() {

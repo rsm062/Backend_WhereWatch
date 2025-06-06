@@ -10,4 +10,5 @@ public interface InterfaceMovieService {
     Optional<Movie> findByTitle(String title);
     Movie save(Movie movie);
     List<Movie> searchMoviesByTitle(String title);
+    Movie searchMovieById(int id);
 }
