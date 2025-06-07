@@ -2,7 +2,6 @@ package ad.project.backend_wherewatch.infrastructure.init;
 
 import ad.project.backend_wherewatch.domain.models.Platform;
 import ad.project.backend_wherewatch.domain.repositories.PlatformRepository;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -10,11 +9,29 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.List;
 
+
+/**
+ * Initializes the predefined list of streaming platforms in the database at application startup.
+ * <p>
+ * Implements CommandLineRunner to execute this initialization logic automatically
+ * when the Spring Boot application starts.
+ */
 @Component
 public class PlatformInit implements CommandLineRunner {
-    @Autowired
-    private PlatformRepository platformRepository;
 
+    private final PlatformRepository platformRepository;
+
+    @Autowired
+    public PlatformInit(PlatformRepository platformRepository) {
+        this.platformRepository = platformRepository;
+    }
+
+    /**
+     * Runs on application startup to ensure the predefined platforms are present in the database.
+     * If a platform with the same ID is already present, it will not be added again.
+     *
+     * @param args command line arguments (not used).
+     */
     @Override
     public void run(String... args) {
         List<Platform> platforms = Arrays.asList(

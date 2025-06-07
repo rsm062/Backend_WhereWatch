@@ -14,6 +14,8 @@ import ad.project.backend_wherewatch.domain.repositories.AvailabilityRepository;
 import ad.project.backend_wherewatch.domain.repositories.MovieRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -23,15 +25,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class TmdbService implements InterfaceTmdbService {
 
+    private static final Logger logger = LoggerFactory.getLogger(TmdbService.class);
     private final RestTemplate restTemplate;
     private final MovieRepository movieRepository;
     private final AsyncSaverService asyncSaverService;
@@ -40,11 +41,11 @@ public class TmdbService implements InterfaceTmdbService {
     private final MovieMapper movieMapper;
     private final AvailabilityRepository availabilityRepository;
 
-
-
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${tmdb.api.key}")
     private String apiKey; // Token completo con 'Bearer ...'
+
 
     @Autowired
     public TmdbService(RestTemplate restTemplate, MovieRepository movieRepository, AsyncSaverService asyncSaverService, PlatformService platformService, CountryService countryService, MovieMapper movieMapper, AvailabilityRepository availabilityRepository) {
@@ -57,42 +58,61 @@ public class TmdbService implements InterfaceTmdbService {
         this.availabilityRepository = availabilityRepository;
     }
 
+    /**
+     * Searches for movies on TMDb by title.
+     *
+     * @param title The movie title or partial title to search for.
+     * @return A list of MovieDTO objects representing the found movies,
+     *         or an empty list if no results are found or an error occurs.
+     */
     @Override
     public List<MovieDTO> searchMovies(String title) {
         String url = UriComponentsBuilder
                 .fromHttpUrl("https://api.themoviedb.org/3/search/movie")
-                .queryParam("query", UriUtils.encode(title, StandardCharsets.UTF_8))
+                .queryParam("query", title)
                 //.queryParam("include_adult", true)
-                //.queryParam("language", "en-US")
+                //.queryParam("language", "es-ES")
                 .queryParam("page", 1)
                 .toUriString();
 
         ResponseEntity<String> response = headerCreater(url);
-
-        // Parsear JSON a lista de MovieDTO
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            logger.warn("TMDb API search failed with status: {}", response.getStatusCode());
+            return Collections.emptyList();
+        }
         return parseResponse(response.getBody());
     }
 
+    /**
+     * Executes an authorized HTTP GET request to the given URL.
+     *
+     * @param url The complete URL of the endpoint.
+     * @return A ResponseEntity containing the JSON response body.
+     */
     private ResponseEntity<String> headerCreater(String url) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("accept", "application/json");
         headers.set("Authorization", "Bearer " + apiKey);
         HttpEntity<Void> entity = new HttpEntity<>(headers);
-        return restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                entity,
-                String.class
-        );
+        try {
+            return restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+        } catch (Exception e) {
+            logger.error("HTTP request failed for URL: {}", url, e);
+            throw e;
+        }
     }
 
+    /**
+     * Parses the JSON response from TMDb to extract a list of movies.
+     *
+     * @param json The JSON string response.
+     * @return A list of MovieDTO objects parsed from the response,
+     *         or an empty list if no movies are found or an error occurs.
+     */
     private List<MovieDTO> parseResponse(String json) {
-        // Usa Jackson para parsear JSON
-        ObjectMapper mapper = new ObjectMapper();
         List<MovieDTO> results = new ArrayList<>();
-
         try {
-            JsonNode root = mapper.readTree(json);
+            JsonNode root = objectMapper.readTree(json);
             JsonNode resultsNode = root.get("results");
 
             if (resultsNode != null && resultsNode.isArray()) {
@@ -109,98 +129,108 @@ public class TmdbService implements InterfaceTmdbService {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error parsing TMDB JSON response", e);
         }
-
         return results;
     }
 
-
+    /**
+     * Searches for movies by title first in the local database,
+     * and if none are found, queries TMDb and saves the results asynchronously.
+     *
+     * @param title The movie title to search for.
+     * @return A list of MovieDTO objects representing the found movies.
+     */
     @Override
     public List<MovieDTO> searchAndFallback(String title) {
-        // 1. Buscar en BBDD con LIKE
+        // 1. Search in DB with LIKE
         List<Movie> dbResults = movieRepository.findByTitleContainingIgnoreCase(title);
-
         if (!dbResults.isEmpty()) {
             return dbResults.stream()
                     .map(movieMapper::toDto)
                     .collect(Collectors.toList());
         }
-
-        // 2. Buscar en TMDB
+        // 2. Search in TMDB
         List<MovieDTO> apiResults = searchMovies(title);
 
         if (apiResults.isEmpty()) {
-            return Collections.emptyList(); // Nada encontrado ni local ni remoto
+            logger.info("No movies found locally or on TMDb for '{}'", title);
+            return Collections.emptyList();
         }
+        //3. Save Async in DB
         for (MovieDTO apiResult : apiResults) {
             asyncSaverService.saveMovieAndAvailability(apiResult);
         }
-
-        /*//  Convertir a entidades y guardar en BBDD
-        for (MovieDTO dto : apiResults) {
-            //Extraer id
-            int tmdbId = dto.getId();
-            // Obtener availabilities desde TMDB
-            List<AvailabilityDTO> availabilities = getProvidersForMovieId(tmdbId);
-            //Mapear a entidad y guardar Movie + Availability
-            Movie movie = movieMapper.toEntity(dto);
-            movie.setId(tmdbId);
-            movieRepository.save(movie);
-            //Guardamos disponibilidad
-            saveAvailabilityData(availabilities, movie);
-            //preparamos para devolver al front
-            dto.setAvailabilities(availabilities);
-            finalResults.add(dto);
-
-        }*/
-
+        //4.Return results to show in front
         return apiResults;
     }
 
+    /**
+     * Retrieves the list of streaming platforms available for a given TMDb movie ID.
+     *
+     * @param tmdbId The TMDb ID of the movie.
+     * @return A list of AvailabilityDTO objects representing the platforms
+     *         and countries where the movie is available.
+     */
     public List<AvailabilityDTO> getProvidersForMovieId(int tmdbId) {
         String url = "https://api.themoviedb.org/3/movie/" + tmdbId + "/watch/providers";
-
         ResponseEntity<String> response = headerCreater(url);
-
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            logger.warn("TMDb providers API failed for movieId {}: {}", tmdbId, response.getStatusCode());
+            return Collections.emptyList();
+        }
         List<AvailabilityDTO> availabilities = new ArrayList<>();
 
         try {
             JsonNode root = new ObjectMapper().readTree(response.getBody());
             JsonNode resultsNode = root.path("results");
 
-            Iterator<String> fieldNames = resultsNode.fieldNames();
-            while (fieldNames.hasNext()) {
-                String countryCode = fieldNames.next();
+            Iterator<String> countryCodes = resultsNode.fieldNames();
+            while (countryCodes.hasNext()) {
+                String countryCode = countryCodes.next();
                 JsonNode countryNode = resultsNode.get(countryCode);
-                // Buscar el país en base de datos por ISO
+                // Search the country in DB by ISOCode
                 Optional<Country> countryOpt = countryService.findByIsoCode(countryCode);
-                if (countryOpt.isPresent() && countryNode.has("flatrate")) {
-                    CountryDTO countryDTO = CountryMapper.toDto(countryOpt.get());
-                    for (JsonNode provider : countryNode.get("flatrate")) {
-                        AvailabilityDTO availabilityDTO = new AvailabilityDTO();
-                        // Construir PlatformDTO
-                        Platform platform = platformService.findById(provider.get("provider_id").asInt()).orElse(null);
-                        if (platform != null) {
-                            PlatformDTO platformDTO = PlatformMapper.toDto(platform);
-                            availabilityDTO.setPlatform(platformDTO);
-                        }else{
-                            continue;
-                        }
-                        availabilityDTO.setCountry(countryDTO);
-                        availabilities.add(availabilityDTO);
+
+                if (countryOpt.isEmpty()) {
+                    logger.warn("Country with ISO code {} not found in DB", countryCode);
+                    continue;
+                }
+
+                if (!countryNode.has("flatrate")) {
+                    logger.info("No flatrate providers for country {}", countryCode);
+                    continue;
+                }
+
+                CountryDTO countryDTO = CountryMapper.toDto(countryOpt.get());
+                for (JsonNode provider : countryNode.get("flatrate")) {
+                    AvailabilityDTO availabilityDTO = new AvailabilityDTO();
+                    // Search the platform in DB by Id
+                    Platform platform = platformService.findById(provider.get("provider_id").asInt()).orElse(null);
+                    if (platform != null) {
+                        PlatformDTO platformDTO = PlatformMapper.toDto(platform);
+                        availabilityDTO.setPlatform(platformDTO);
+                    } else {
+                        continue;
                     }
-                } else {
-                    System.err.println("No se encontró el país con ISO: " + countryCode);
+                    availabilityDTO.setCountry(countryDTO);
+                    availabilities.add(availabilityDTO);
                 }
             }
 
+
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error parsing availability providers for movieId {}", tmdbId, e);
         }
         return availabilities;
     }
 
+    /**
+     * Saves the availability (platform and country) data for a movie in the database.
+     *
+     * @param availabilityDTOs A list of AvailabilityDTO objects to save.
+     * @param movie The Movie entity associated with the availability data.
+     */
     public void saveAvailabilityData(List<AvailabilityDTO> availabilityDTOs, Movie movie) {
         if (availabilityDTOs == null || availabilityDTOs.isEmpty() || movie == null) {
             return;

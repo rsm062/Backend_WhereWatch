@@ -9,15 +9,29 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Initializes the predefined list of countries in the database at application startup.
+ * <p>
+ * Implements CommandLineRunner to run this initialization logic automatically
+ * when the Spring Boot application starts.
+ */
 @Component
 public class CountryInit implements CommandLineRunner {
 
     private final CountryService countryService;
 
+    @Autowired
     public CountryInit(CountryService countryService) {
         this.countryService = countryService;
     }
 
+    /**
+     * Runs on application startup and ensures that the predefined list of countries
+     * exists in the database. If a country with the same ISO code is already present,
+     * it will not be added again.
+     *
+     * @param args Command line arguments (not used).
+     */
     @Override
     public void run(String... args) {
         List<Country> countries = Arrays.asList(
