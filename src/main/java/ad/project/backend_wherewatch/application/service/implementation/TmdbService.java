@@ -23,7 +23,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.*;
@@ -96,10 +96,16 @@ public class TmdbService implements InterfaceTmdbService {
         HttpEntity<Void> entity = new HttpEntity<>(headers);
         try {
             return restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+        } catch (ResourceAccessException e) {
+            logger.error("No se pudo conectar a TMDb (sin internet o timeout): {}", e.getMessage());
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            logger.error("Error HTTP al acceder a TMDb: {} - {}", e.getStatusCode(), e.getMessage());
+        } catch (RestClientException e) {
+            logger.error("Error general al llamar a TMDb: {}", e.getMessage());
         } catch (Exception e) {
-            logger.error("HTTP request failed for URL: {}", url, e);
-            throw e;
+            logger.error("Error inesperado al llamar a TMDb: {}", e.getMessage(), e);
         }
+        return ResponseEntity.internalServerError().body(null);
     }
 
     /**
